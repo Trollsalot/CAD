@@ -1,0 +1,1511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CentralSquare CAD</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#111;color:#fff;font-family:'Barlow',sans-serif;font-size:13px;overflow:hidden}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:#1a1a1a}
+::-webkit-scrollbar-thumb{background:#333;border-radius:2px}
+
+/* ── LOGIN ── */
+.login-wrap{position:fixed;inset:0;background:#0d1117;display:flex;align-items:center;justify-content:center;z-index:9999}
+.login-card{background:#1a1f2e;border:1px solid #2a3a50;border-radius:8px;padding:36px 40px;width:380px;box-shadow:0 20px 60px rgba(0,0,0,0.8)}
+.login-logo{font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:900;color:#4da6ff;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px}
+.login-agency{font-size:12px;color:#4a6080;font-family:'Share Tech Mono',monospace;letter-spacing:2px;margin-bottom:28px}
+.login-field{margin-bottom:14px}
+.login-field label{display:block;font-size:10px;font-weight:700;color:#4a6080;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px}
+.login-field input,.login-field select{width:100%;background:#0d1117;border:1px solid #2a3a50;border-radius:4px;padding:9px 12px;color:#c8d8f0;font-family:'Share Tech Mono',monospace;font-size:13px;outline:none}
+.login-field input:focus,.login-field select:focus{border-color:#4da6ff}
+.login-field select option{background:#1a1f2e}
+.login-btn{width:100%;padding:11px;background:#1a6fc4;border:none;border-radius:4px;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;cursor:pointer;letter-spacing:1px;text-transform:uppercase;margin-top:6px}
+.login-btn:hover{background:#2185e0}
+.login-err{color:#ff6b6b;font-size:11px;font-family:'Share Tech Mono',monospace;margin-top:8px;display:none}
+.login-hint{font-size:10px;color:#2a3a50;font-family:'Share Tech Mono',monospace;margin-top:14px;text-align:center;line-height:1.6}
+
+/* ── FUNCTION KEY BAR ── */
+.fkey-bar{height:90px;background:#1a1a1a;border-bottom:2px solid #2a2a2a;display:flex;align-items:stretch;flex-shrink:0}
+.fkey{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border-right:1px solid #2a2a2a;cursor:pointer;transition:background 0.12s;padding:8px 4px;position:relative}
+.fkey:last-child{border-right:none}
+.fkey:hover{background:#222}
+.fkey:active{background:#1a6fc4}
+.fkey-icon{font-size:28px;line-height:1}
+.fkey-label{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.5px;text-align:center}
+.fkey-key{font-size:10px;color:#444;font-family:'Share Tech Mono',monospace;position:absolute;bottom:5px;right:8px}
+.fkey.enroute .fkey-label{color:#4da6ff}
+.fkey.arrive .fkey-label{color:#2ecc71}
+.fkey.location .fkey-label{color:#e8941f}
+.fkey.clear .fkey-label{color:#e74c3c}
+.fkey.transport .fkey-label{color:#a78bfa}
+.fkey.available .fkey-label{color:#2ecc71}
+.fkey.oos .fkey-label{color:#e74c3c}
+.fkey.hospital .fkey-label{color:#a78bfa}
+
+/* ── TABS ── */
+.tab-bar{height:38px;background:#222;border-bottom:2px solid #333;display:flex;align-items:stretch;flex-shrink:0}
+.tab{padding:0 20px;display:flex;align-items:center;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.5px;color:#666;cursor:pointer;border-right:1px solid #2a2a2a;border-bottom:2px solid transparent;transition:all 0.12s;text-transform:uppercase}
+.tab:hover{color:#aaa;background:#282828}
+.tab.active{color:#fff;background:#1a1a1a;border-bottom-color:#4da6ff}
+.tab-badge{background:#e74c3c;color:#fff;font-size:10px;border-radius:10px;padding:1px 5px;margin-left:5px;font-family:'Share Tech Mono',monospace}
+
+/* ── MAIN LAYOUT ── */
+.app{display:none;flex-direction:column;height:100vh}
+.app.visible{display:flex}
+.content{flex:1;display:flex;overflow:hidden}
+
+/* ── STATUS HEADER ── */
+.status-header{background:#1a1a1a;border-bottom:1px solid #2a2a2a;padding:6px 12px;display:flex;align-items:center;gap:16px;flex-shrink:0}
+.status-header-title{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;color:#4da6ff;text-transform:uppercase;letter-spacing:1px}
+.status-header-info{font-family:'Share Tech Mono',monospace;font-size:12px;color:#888}
+.status-header-right{margin-left:auto;display:flex;align-items:center;gap:16px}
+.conn-pill{display:flex;align-items:center;gap:5px;font-size:11px;font-family:'Share Tech Mono',monospace}
+.conn-dot{width:7px;height:7px;border-radius:50%;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+.dot-green{background:#2ecc71;box-shadow:0 0 5px #2ecc71}
+.dot-red{background:#e74c3c;box-shadow:0 0 5px #e74c3c;animation:none}
+.clock-disp{font-family:'Share Tech Mono',monospace;font-size:16px;color:#4da6ff;letter-spacing:2px}
+.user-info{font-size:11px;font-family:'Share Tech Mono',monospace;color:#888}
+.logout-btn{padding:4px 10px;background:#2a2a2a;border:1px solid #333;border-radius:3px;color:#888;font-size:11px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:0.5px}
+.logout-btn:hover{color:#fff;border-color:#555}
+
+/* ── UNIT STATUS TABLE (main view) ── */
+.unit-table-wrap{flex:1;overflow-y:auto;background:#111}
+.unit-table{width:100%;border-collapse:collapse}
+.unit-table thead th{background:#1e1e1e;color:#666;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;padding:7px 12px;border-bottom:1px solid #2a2a2a;text-align:left;position:sticky;top:0;z-index:5;cursor:pointer;user-select:none}
+.unit-table thead th:hover{color:#aaa}
+.unit-table thead th.sort-asc::after{content:' ↑'}
+.unit-table thead th.sort-desc::after{content:' ↓'}
+.unit-table tbody tr{border-bottom:1px solid #1e1e1e;cursor:pointer;transition:background 0.1s}
+.unit-table tbody tr:hover{background:#1a1a1a}
+.unit-table tbody tr.selected{background:#1a3a5c !important}
+.unit-table tbody tr.my-unit{background:#0d1f0d}
+.unit-table tbody tr.my-unit.selected{background:#0d2a3a !important}
+.unit-table td{padding:8px 12px;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:600;white-space:nowrap}
+.unit-icon{font-size:18px;margin-right:4px}
+.unit-id-cell{display:flex;align-items:center;gap:6px}
+
+/* Status colors matching CentralSquare exactly */
+.s-enroute{color:#4da6ff}
+.s-arrived{color:#4da6ff}
+.s-available{color:#fff}
+.s-transport{color:#a78bfa}
+.s-hospital{color:#a78bfa}
+.s-oos{color:#e8941f}
+.s-busy-oos{color:#e8941f}
+.s-assigned{color:#e8941f}
+.nature-enroute{color:#2ecc71;font-weight:700}
+.nature-arrived{color:#4da6ff;font-weight:700}
+.nature-oos{color:#e8941f;font-weight:700}
+.unit-id-green{color:#2ecc71}
+.unit-id-blue{color:#4da6ff}
+.unit-id-orange{color:#e8941f}
+.unit-id-white{color:#fff}
+.time-cell{font-family:'Share Tech Mono',monospace;font-size:13px;color:#aaa}
+.station-cell{color:#888}
+
+/* Row highlight colors for priority */
+.row-highlight-blue{background:#0d1a2e !important}
+.row-highlight-orange{background:#2a1a00 !important}
+
+/* ── BOTTOM EVENTS PANEL ── */
+.bottom-panel{background:#111;border-top:2px solid #2a2a2a;flex-shrink:0;height:220px;display:flex;flex-direction:column}
+.bottom-panel-hdr{background:#1e1e1e;border-bottom:1px solid #2a2a2a;padding:5px 12px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.bottom-hdr-title{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:0.5px}
+.event-table{width:100%;border-collapse:collapse}
+.event-table th{background:#1a1a1a;color:#555;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;padding:5px 12px;border-bottom:1px solid #222;text-align:left}
+.event-table td{padding:6px 12px;font-family:'Barlow Condensed',sans-serif;font-size:13px;border-bottom:1px solid #1a1a1a;cursor:pointer}
+.event-table tr:hover td{background:#1a1a1a}
+.event-num{color:#4da6ff;font-family:'Share Tech Mono',monospace;font-size:12px}
+.event-time{color:#888;font-family:'Share Tech Mono',monospace;font-size:12px}
+.event-nature{color:#2ecc71;font-weight:700}
+.event-station{color:#888}
+
+/* ── RIGHT SIDEBAR (call detail) ── */
+.right-sidebar{width:320px;background:#141414;border-left:2px solid #2a2a2a;display:flex;flex-direction:column;flex-shrink:0}
+.sidebar-hdr{background:#1e1e1e;border-bottom:1px solid #2a2a2a;padding:8px 12px;flex-shrink:0}
+.sidebar-title{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:800;color:#4da6ff;text-transform:uppercase;letter-spacing:1px}
+.sidebar-body{flex:1;overflow-y:auto;padding:10px 12px}
+.sb-field{margin-bottom:10px}
+.sb-label{font-size:10px;font-weight:700;color:#444;text-transform:uppercase;letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;margin-bottom:2px}
+.sb-val{font-size:14px;font-family:'Barlow Condensed',sans-serif;font-weight:600;color:#c8d8f0}
+.sb-val.highlight{color:#4da6ff}
+.sb-val.green{color:#2ecc71}
+.sb-val.orange{color:#e8941f}
+.sb-val.red{color:#e74c3c}
+.sb-divider{height:1px;background:#222;margin:10px 0}
+.sb-actions{padding:10px 12px;border-top:1px solid #2a2a2a;flex-shrink:0;display:flex;flex-direction:column;gap:6px}
+.sb-btn{padding:8px;border-radius:3px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:800;cursor:pointer;border:none;text-transform:uppercase;letter-spacing:0.5px;transition:all 0.12s}
+.sb-btn-row{display:flex;gap:6px}
+.sb-btn-row .sb-btn{flex:1}
+.sb-btn.blue{background:#1a6fc4;color:#fff}.sb-btn.blue:hover{background:#2185e0}
+.sb-btn.green{background:#1a6a3a;color:#2ecc71;border:1px solid #1a8a4a}.sb-btn.green:hover{background:#1a8a4a;color:#fff}
+.sb-btn.orange{background:#2a1a00;color:#e8941f;border:1px solid #e8941f}.sb-btn.orange:hover{background:#e8941f;color:#fff}
+.sb-btn.red{background:#2a0d0d;color:#e74c3c;border:1px solid #e74c3c}.sb-btn.red:hover{background:#e74c3c;color:#fff}
+.sb-btn.purple{background:#1a1040;color:#a78bfa;border:1px solid #a78bfa}.sb-btn.purple:hover{background:#a78bfa;color:#fff}
+.sb-btn.gray{background:#222;color:#888;border:1px solid #333}.sb-btn.gray:hover{color:#fff;border-color:#555}
+
+/* ── DISPATCHER VIEW ── */
+.disp-layout{flex:1;display:grid;grid-template-columns:1fr 320px;overflow:hidden}
+.disp-main{display:flex;flex-direction:column;overflow:hidden}
+.disp-toolbar{background:#1a1a1a;border-bottom:1px solid #2a2a2a;padding:8px 12px;display:flex;gap:8px;align-items:center;flex-shrink:0}
+.disp-input{background:#0d1117;border:1px solid #2a3a50;border-radius:3px;padding:6px 10px;color:#c8d8f0;font-family:'Share Tech Mono',monospace;font-size:12px;outline:none;flex:1}
+.disp-input:focus{border-color:#4da6ff}
+.d-btn{padding:6px 14px;background:#1a1f2e;border:1px solid #2a3a50;border-radius:3px;color:#8aa4c8;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;cursor:pointer;letter-spacing:0.5px;text-transform:uppercase;transition:all 0.12s;white-space:nowrap}
+.d-btn:hover{background:#2a2f3e;color:#fff}
+.d-btn.primary{background:#1a6fc4;border-color:#2185e0;color:#fff}.d-btn.primary:hover{background:#2185e0}
+.d-btn.danger{background:#2a0d0d;border-color:#e74c3c;color:#e74c3c}.d-btn.danger:hover{background:#e74c3c;color:#fff}
+.inc-list-wrap{flex:1;overflow-y:auto}
+.inc-hdr{display:grid;grid-template-columns:80px 50px 1fr 90px 110px 80px;padding:6px 12px;background:#1e1e1e;border-bottom:1px solid #2a2a2a;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.5px;position:sticky;top:0;z-index:5}
+.inc-row{display:grid;grid-template-columns:80px 50px 1fr 90px 110px 80px;padding:8px 12px;border-bottom:1px solid #1a1a1a;cursor:pointer;transition:background 0.1s;align-items:center}
+.inc-row:hover{background:#1a1a1a}
+.inc-row.selected{background:#0d1a2e}
+.inc-row.p1{border-left:3px solid #e74c3c}
+.inc-row.p2{border-left:3px solid #e8941f}
+.inc-row.p3{border-left:3px solid #4da6ff}
+.inc-row.p4{border-left:3px solid #2ecc71}
+.inc-num{font-family:'Share Tech Mono',monospace;font-size:11px;color:#4da6ff}
+.inc-pri{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:800}
+.p1-txt{color:#e74c3c}.p2-txt{color:#e8941f}.p3-txt{color:#4da6ff}.p4-txt{color:#2ecc71}
+.inc-type{font-size:13px;font-weight:600;color:#fff;font-family:'Barlow Condensed',sans-serif}
+.inc-addr{font-size:11px;color:#555;font-family:'Share Tech Mono',monospace}
+.inc-units-cell{font-size:11px;font-family:'Share Tech Mono',monospace;color:#888}
+.inc-time-cell{font-size:11px;font-family:'Share Tech Mono',monospace;color:#555}
+
+/* STATUS badges */
+.status-badge{display:inline-block;padding:2px 7px;border-radius:2px;font-size:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:0.3px}
+.sb-active{background:rgba(46,204,113,0.15);color:#2ecc71;border:1px solid rgba(46,204,113,0.3)}
+.sb-pending{background:rgba(232,148,31,0.15);color:#e8941f;border:1px solid rgba(232,148,31,0.3)}
+.sb-closed{background:rgba(100,100,100,0.15);color:#555;border:1px solid rgba(100,100,100,0.2)}
+
+/* ── CAD LOG ── */
+.log-wrap{display:flex;flex-direction:column;height:100%}
+.log-list{flex:1;overflow-y:auto;padding:6px}
+.log-entry{padding:5px 8px;border-radius:2px;margin-bottom:2px;font-size:11px;font-family:'Share Tech Mono',monospace;border-left:2px solid #2a2a2a;background:#161616;line-height:1.4}
+.log-entry.dispatch{border-left-color:#e8941f}
+.log-entry.status{border-left-color:#4da6ff}
+.log-entry.comment{border-left-color:#444}
+.log-entry.alert{border-left-color:#e74c3c}
+.log-entry.ehr{border-left-color:#22d3ee}
+.log-t{color:#444;font-size:10px}
+.log-u{color:#e8941f}
+.log-m{color:#c8d8f0;display:block;margin-top:1px}
+.log-m.ehr-m{color:#22d3ee}
+.log-m.alert-m{color:#e74c3c}
+.log-input-area{padding:8px;border-top:1px solid #2a2a2a;flex-shrink:0}
+.log-unit-sel{width:100%;background:#161616;border:1px solid #2a2a2a;border-radius:3px;padding:5px 8px;color:#888;font-family:'Share Tech Mono',monospace;font-size:11px;margin-bottom:5px;outline:none}
+.log-row{display:flex;gap:5px}
+.log-input{flex:1;background:#161616;border:1px solid #2a2a2a;border-radius:3px;padding:5px 8px;color:#c8d8f0;font-family:'Share Tech Mono',monospace;font-size:11px;outline:none}
+.log-input:focus{border-color:#4da6ff}
+.log-tx{padding:5px 10px;background:#1a6fc4;border:none;border-radius:3px;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;cursor:pointer}
+.log-tx:hover{background:#2185e0}
+
+/* ── SUPERVISOR/COMMAND ── */
+.sup-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;padding:12px;overflow-y:auto;flex:1}
+.sup-card{background:#161616;border:1px solid #2a2a2a;border-radius:4px;padding:12px}
+.sup-card-title{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:800;color:#4da6ff;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid #222}
+.stat-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #1a1a1a;font-size:13px;font-family:'Barlow Condensed',sans-serif}
+.stat-row:last-child{border-bottom:none}
+.stat-v{font-weight:800;font-size:15px}
+
+/* ── DISPATCH MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:2000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal{background:#1a1f2e;border:1px solid #2a3a50;border-radius:6px;width:640px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.9)}
+.modal-hdr{background:#141922;border-bottom:1px solid #2a3a50;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:5}
+.modal-title{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:900;color:#fff;text-transform:uppercase;letter-spacing:1px}
+.modal-close{background:none;border:none;color:#444;font-size:22px;cursor:pointer;line-height:1;padding:0 4px}
+.modal-close:hover{color:#e74c3c}
+.modal-body{padding:18px}
+.modal-footer{padding:12px 18px;border-top:1px solid #2a3a50;display:flex;gap:8px;justify-content:flex-end;position:sticky;bottom:0;background:#1a1f2e;z-index:5}
+.m-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.m-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.m-full{grid-column:1/-1}
+.m-group{display:flex;flex-direction:column;gap:5px}
+.m-group label{font-size:10px;font-weight:700;color:#4a6080;text-transform:uppercase;letter-spacing:1px;font-family:'Barlow Condensed',sans-serif}
+.m-group input,.m-group select,.m-group textarea{background:#0d1117;border:1px solid #2a3a50;border-radius:3px;padding:7px 10px;color:#c8d8f0;font-family:'Share Tech Mono',monospace;font-size:12px;outline:none;width:100%}
+.m-group input:focus,.m-group select:focus,.m-group textarea:focus{border-color:#4da6ff}
+.m-group select option{background:#1a1f2e}
+.m-group textarea{resize:vertical;min-height:60px;line-height:1.5}
+.m-btn{padding:8px 18px;border-radius:3px;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:800;cursor:pointer;border:none;letter-spacing:0.5px;text-transform:uppercase}
+.m-btn-primary{background:#1a6fc4;color:#fff}.m-btn-primary:hover{background:#2185e0}
+.m-btn-ghost{background:#1a1f2e;color:#8aa4c8;border:1px solid #2a3a50}.m-btn-ghost:hover{color:#fff}
+.recommend-box{background:rgba(26,111,196,0.1);border:1px solid #1a6fc4;border-radius:3px;padding:8px 12px;margin-bottom:12px}
+.recommend-title{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:800;color:#4da6ff;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px}
+.recommend-chip{display:inline-flex;align-items:center;gap:4px;background:#141922;border:1px solid #2a3a50;border-radius:3px;padding:3px 8px;margin:2px;cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:11px;color:#c8d8f0}
+.recommend-chip:hover{border-color:#4da6ff;color:#4da6ff}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:20px;right:20px;background:#1a1f2e;border:1px solid #2a3a50;border-radius:4px;padding:10px 16px;font-family:'Share Tech Mono',monospace;font-size:12px;color:#c8d8f0;z-index:5000;display:none;max-width:360px;box-shadow:0 4px 20px rgba(0,0,0,0.6)}
+.toast.green{border-color:#1a8a4a;color:#2ecc71}
+.toast.red{border-color:#8a1a1a;color:#e74c3c}
+.toast.blue{border-color:#1a6fc4;color:#4da6ff}
+
+/* ── PCR PROMPT ── */
+.pcr-prompt{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a1f2e;border:2px solid #22d3ee;border-radius:6px;padding:18px 22px;z-index:6000;min-width:360px;max-width:480px;box-shadow:0 0 40px rgba(34,211,238,0.2);animation:popIn 0.3s ease}
+@keyframes popIn{from{transform:translate(-50%,-50%) scale(0.9);opacity:0}to{transform:translate(-50%,-50%) scale(1);opacity:1}}
+.pcr-prompt-title{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:900;color:#22d3ee;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+.pcr-prompt-body{font-family:'Share Tech Mono',monospace;font-size:12px;color:#c8d8f0;line-height:1.6;margin-bottom:14px}
+.pcr-prompt-actions{display:flex;gap:8px}
+
+/* ── MY CALL PANEL (field unit specific) ── */
+.my-call-banner{background:#0d1a0d;border-bottom:2px solid #1a8a4a;padding:6px 14px;display:flex;align-items:center;gap:14px;flex-shrink:0}
+.my-call-label{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:800;color:#1a8a4a;text-transform:uppercase;letter-spacing:1px}
+.my-call-num{font-family:'Share Tech Mono',monospace;font-size:14px;color:#2ecc71;font-weight:700}
+.my-call-type{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:#2ecc71}
+.my-call-addr{font-family:'Share Tech Mono',monospace;font-size:12px;color:#888}
+
+/* ── RESPONSIVE FKEY ── */
+@media(max-width:900px){.fkey-bar{height:70px}.fkey-icon{font-size:22px}.fkey-label{font-size:11px}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-wrap" id="login-wrap">
+  <div class="login-card">
+    <div class="login-logo">CentralSquare CAD</div>
+    <div class="login-agency">ROBLOX EMS — DISPATCH SYSTEM</div>
+    <div class="login-field"><label>Username</label><input id="l-user" placeholder="e.g. dispatcher01" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div class="login-field"><label>Password</label><input id="l-pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div class="login-field">
+      <label>Role</label>
+      <select id="l-role">
+        <option value="dispatcher">Dispatcher</option>
+        <option value="field">Field Unit</option>
+        <option value="supervisor">Supervisor / Command</option>
+      </select>
+    </div>
+    <div id="login-err" class="login-err">❌ Invalid credentials.</div>
+    <button class="login-btn" onclick="doLogin()">Sign In</button>
+    <div class="login-hint">
+      Dispatcher: dispatcher01 / cad123<br>
+      Field Unit: med1 / cad123 &nbsp;|&nbsp; bls42 / cad123<br>
+      Supervisor: supervisor / cad123
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- PCR PROMPT -->
+<div class="pcr-prompt" id="pcr-prompt" style="display:none">
+  <div class="pcr-prompt-title">📋 PCR Required</div>
+  <div class="pcr-prompt-body" id="pcr-prompt-body"></div>
+  <div class="pcr-prompt-actions">
+    <button class="m-btn m-btn-primary" onclick="dismissPcrPrompt()">OK — Will Complete PCR</button>
+    <button class="m-btn m-btn-ghost" onclick="dismissPcrPrompt()">Later</button>
+  </div>
+</div>
+
+<!-- DISPATCH MODAL -->
+<div class="modal-overlay" id="modal-dispatch" style="display:none">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title">📟 Create New Incident</div>
+      <button class="modal-close" onclick="closeModal('modal-dispatch')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="recommend-box" id="recommend-box" style="display:none">
+        <div class="recommend-title">⚡ Recommended Units</div>
+        <div id="recommend-chips"></div>
+      </div>
+      <div class="m-grid" style="margin-bottom:12px">
+        <div class="m-group">
+          <label>Incident Type *</label>
+          <select id="ni-type" onchange="onTypeChange()">
+            <option value="">-- Select --</option>
+            <optgroup label="EMS — Critical">
+              <option>Cardiac Arrest</option><option>Unconscious / Unresponsive</option>
+              <option>Stroke / CVA</option><option>Difficulty Breathing</option>
+              <option>Chest Pain</option><option>Anaphylaxis / Allergic Reaction</option>
+              <option>Overdose / Poisoning</option><option>MVC — Entrapment</option>
+              <option>Hemorrhage / Bleeding</option>
+            </optgroup>
+            <optgroup label="EMS — Urgent">
+              <option>Seizure</option><option>Diabetic Emergency</option>
+              <option>Altered Mental Status</option><option>MVC — Injuries</option>
+              <option>Traumatic Injury</option><option>OB / Obstetric Emergency</option>
+              <option>Behavioral / Psychiatric</option>
+            </optgroup>
+            <optgroup label="EMS — Non-Urgent">
+              <option>Back Pain — BLS</option><option>Chest Pains</option>
+              <option>Sick Person — BLS</option><option>Fall</option>
+              <option>Abdominal Pain</option><option>Nausea / Vomiting</option>
+              <option>Welfare Check</option><option>Public Assist</option>
+              <option>MVC — No Injuries</option>
+            </optgroup>
+            <optgroup label="Fire / Rescue">
+              <option>Structure Fire</option><option>Vehicle Fire</option>
+              <option>Brush Fire</option><option>Water Rescue</option>
+              <option>Hazmat</option><option>Rescue — Confined Space</option>
+            </optgroup>
+          </select>
+        </div>
+        <div class="m-group">
+          <label>Priority *</label>
+          <select id="ni-priority">
+            <option value="1">P1 — Life Threatening</option>
+            <option value="2">P2 — Urgent</option>
+            <option value="3" selected>P3 — Non-Urgent</option>
+            <option value="4">P4 — Routine</option>
+          </select>
+        </div>
+        <div class="m-group m-full">
+          <label>Location / Address *</label>
+          <input id="ni-address" placeholder="123 Main St / Intersection / Landmark">
+        </div>
+        <div class="m-group">
+          <label>Cross Street</label>
+          <input id="ni-cross" placeholder="Cross street">
+        </div>
+        <div class="m-group">
+          <label>Station</label>
+          <select id="ni-station">
+            <option value="">Auto-assign</option>
+              <option>BASE</option>
+            <option>STATION 10</option>
+            <option>STATION 11</option>
+            <option>STATION 12</option>
+            <option>STATION 13</option>
+            <option>STATION 14</option>
+            <option>STATION 15</option>
+            <option>STATION 19</option>
+            <option>STATION 2</option>
+            <option>STATION 20</option>
+            <option>STATION 21</option>
+            <option>STATION 22</option>
+            <option>STATION 23</option>
+            <option>STATION 24</option>
+            <option>STATION 25</option>
+            <option>STATION 26</option>
+            <option>STATION 27</option>
+            <option>STATION 28</option>
+            <option>STATION 29</option>
+            <option>STATION 3</option>
+            <option>STATION 31</option>
+            <option>STATION 33</option>
+            <option>STATION 4</option>
+            <option>STATION 40</option>
+            <option>STATION 5</option>
+            <option>STATION 6</option>
+            <option>STATION 7</option>
+            <option>STATION 8</option>
+            <option>STATION 9</option>
+          </select>
+        </div>
+        <div class="m-group m-full">
+          <label>Caller Info</label>
+          <input id="ni-caller" placeholder="Caller name / callback number">
+        </div>
+        <div class="m-group m-full">
+          <label>Incident Notes</label>
+          <textarea id="ni-notes" placeholder="Chief complaint, additional details, hazards, access info..."></textarea>
+        </div>
+        <div class="m-group">
+          <label>Assign Unit(s)</label>
+          <select id="ni-units" multiple style="height:90px"></select>
+        </div>
+        <div class="m-group">
+          <label>Agency</label>
+          <select id="ni-agency">
+            <option value="primary">Primary — Roblox EMS</option>
+            <option value="mutual1">Mutual Aid — Bloxburg Fire</option>
+            <option value="mutual2">Mutual Aid — County EMS</option>
+            <option value="mutual3">Mutual Aid — State Police</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="m-btn m-btn-ghost" onclick="closeModal('modal-dispatch')">Cancel</button>
+      <button class="m-btn m-btn-primary" onclick="createIncident()">Create &amp; Dispatch</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD UNIT MODAL -->
+<div class="modal-overlay" id="modal-add-unit" style="display:none">
+  <div class="modal" style="width:480px">
+    <div class="modal-hdr">
+      <div class="modal-title">Register Unit</div>
+      <button class="modal-close" onclick="closeModal('modal-add-unit')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="m-grid">
+        <div class="m-group"><label>Unit ID *</label><input id="au-id" placeholder="MED1, BLS42, ENGINE3..."></div>
+        <div class="m-group"><label>Unit Type *</label>
+          <select id="au-type">
+            <option>ALS — Paramedic</option><option>ALS — AEMT</option><option>BLS — EMT</option>
+            <option>Engine / Fire</option><option>Ladder</option><option>Rescue</option>
+            <option>Supervisor</option><option>Mutual Aid</option>
+          </select>
+        </div>
+        <div class="m-group"><label>Crew Lead</label><input id="au-crew" placeholder="Username / name"></div>
+        <div class="m-group"><label>Partner</label><input id="au-crew2" placeholder="Username / name"></div>
+        <div class="m-group"><label>Station</label>
+          <select id="au-station">
+              <option>BASE</option>
+            <option>STATION 10</option>
+            <option>STATION 11</option>
+            <option>STATION 12</option>
+            <option>STATION 13</option>
+            <option>STATION 14</option>
+            <option>STATION 15</option>
+            <option>STATION 19</option>
+            <option>STATION 2</option>
+            <option>STATION 20</option>
+            <option>STATION 21</option>
+            <option>STATION 22</option>
+            <option>STATION 23</option>
+            <option>STATION 24</option>
+            <option>STATION 25</option>
+            <option>STATION 26</option>
+            <option>STATION 27</option>
+            <option>STATION 28</option>
+            <option>STATION 29</option>
+            <option>STATION 3</option>
+            <option>STATION 31</option>
+            <option>STATION 33</option>
+            <option>STATION 4</option>
+            <option>STATION 40</option>
+            <option>STATION 5</option>
+            <option>STATION 6</option>
+            <option>STATION 7</option>
+            <option>STATION 8</option>
+            <option>STATION 9</option>
+          </select>
+        </div>
+        <div class="m-group"><label>Agency</label>
+          <select id="au-agency">
+            <option>Primary — Roblox EMS</option><option>Mutual Aid — Bloxburg Fire</option>
+            <option>Mutual Aid — County EMS</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="m-btn m-btn-ghost" onclick="closeModal('modal-add-unit')">Cancel</button>
+      <button class="m-btn m-btn-primary" onclick="addUnit()">Register</button>
+    </div>
+  </div>
+</div>
+
+<!-- MUTUAL AID MODAL -->
+<div class="modal-overlay" id="modal-mutual" style="display:none">
+  <div class="modal" style="width:480px">
+    <div class="modal-hdr">
+      <div class="modal-title">🔗 Mutual Aid Request</div>
+      <button class="modal-close" onclick="closeModal('modal-mutual')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="m-grid">
+        <div class="m-group m-full"><label>Responding Agency *</label>
+          <select id="ma-agency">
+            <option>Bloxburg Fire Department</option><option>County EMS</option>
+            <option>State Police</option><option>Air Medical</option><option>Neighboring EMS</option>
+          </select>
+        </div>
+        <div class="m-group m-full"><label>Resource Requested *</label>
+          <select id="ma-resource">
+            <option>ALS Unit</option><option>BLS Unit</option><option>Engine Company</option>
+            <option>Ladder Company</option><option>Rescue Unit</option><option>Hazmat Team</option>
+            <option>Air Medical</option><option>Mass Casualty Unit</option>
+          </select>
+        </div>
+        <div class="m-group"><label>Related Incident</label>
+          <select id="ma-incident"><option value="">— None —</option></select>
+        </div>
+        <div class="m-group"><label>Priority</label>
+          <select id="ma-priority">
+            <option value="1">Emergency</option><option value="2" selected>Urgent</option><option value="3">Routine</option>
+          </select>
+        </div>
+        <div class="m-group m-full"><label>Notes</label>
+          <textarea id="ma-notes" placeholder="Reason, special instructions..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="m-btn m-btn-ghost" onclick="closeModal('modal-mutual')">Cancel</button>
+      <button class="m-btn m-btn-primary" onclick="submitMutualAid()">Send Request</button>
+    </div>
+  </div>
+</div>
+
+<!-- CLOSE INCIDENT MODAL -->
+<div class="modal-overlay" id="modal-close-inc" style="display:none">
+  <div class="modal" style="width:420px">
+    <div class="modal-hdr">
+      <div class="modal-title">Close Incident</div>
+      <button class="modal-close" onclick="closeModal('modal-close-inc')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:#0d1117;border:1px solid #2a3a50;border-radius:3px;padding:10px;margin-bottom:12px;font-family:'Share Tech Mono',monospace;font-size:12px;color:#4da6ff" id="close-inc-preview"></div>
+      <div class="m-group" style="margin-bottom:10px"><label>Disposition *</label>
+        <select id="close-disp">
+          <option>Transported to hospital</option><option>Treated — refused transport (AMA)</option>
+          <option>Treated — no transport required</option><option>DOA — no resuscitation</option>
+          <option>Resuscitation — ROSC achieved</option><option>Resuscitation — unsuccessful</option>
+          <option>Cancelled — prior to arrival</option><option>Cancelled — on scene</option>
+          <option>False alarm</option><option>Gone on arrival</option>
+        </select>
+      </div>
+      <div class="m-group"><label>Closing Notes</label>
+        <textarea id="close-notes" placeholder="Final notes..."></textarea>
+      </div>
+      <div style="background:rgba(34,211,238,0.05);border:1px solid rgba(34,211,238,0.2);border-radius:3px;padding:8px 10px;margin-top:10px;font-family:'Share Tech Mono',monospace;font-size:11px;color:#22d3ee">
+        📋 EHR: Crew will be prompted to complete PCR when incident closes.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="m-btn m-btn-ghost" onclick="closeModal('modal-close-inc')">Cancel</button>
+      <button class="m-btn" style="background:#e74c3c;color:#fff" onclick="confirmClose()">Close Incident</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════ MAIN APP ════════════════════════════════ -->
+<div class="app" id="app">
+
+  <!-- STATUS HEADER -->
+  <div class="status-header">
+    <div class="status-header-title" id="sh-title">CentralSquare CAD</div>
+    <div class="status-header-info" id="sh-info"></div>
+    <div class="status-header-right">
+      <div class="conn-pill">
+        <div class="conn-dot dot-green" id="ehr-dot"></div>
+        <span id="ehr-label" style="color:#2ecc71">EHR LINKED</span>
+      </div>
+      <div class="clock-disp" id="clock">00:00:00</div>
+      <div class="user-info" id="user-info"></div>
+      <button class="logout-btn" onclick="doLogout()">Sign Out</button>
+    </div>
+  </div>
+
+  <!-- FUNCTION KEY BAR (field unit only) -->
+  <div class="fkey-bar" id="fkey-bar" style="display:none">
+    <div class="fkey enroute" onclick="fkeyAction('enroute')" title="F1">
+      <div class="fkey-icon">🚑</div>
+      <div class="fkey-label">Enroute</div>
+      <div class="fkey-key">F1</div>
+    </div>
+    <div class="fkey arrive" onclick="fkeyAction('arrived')" title="F2">
+      <div class="fkey-icon">🟢</div>
+      <div class="fkey-label">Arrive</div>
+      <div class="fkey-key">F2</div>
+    </div>
+    <div class="fkey location" onclick="fkeyAction('location')" title="F3">
+      <div class="fkey-icon">📍</div>
+      <div class="fkey-label">Location Change</div>
+      <div class="fkey-key">F3</div>
+    </div>
+    <div class="fkey clear" onclick="fkeyAction('clear')" title="F4">
+      <div class="fkey-icon">✅</div>
+      <div class="fkey-label">Clear</div>
+      <div class="fkey-key">F4</div>
+    </div>
+    <div class="fkey transport" onclick="fkeyAction('transport')" title="F5">
+      <div class="fkey-icon">🏥</div>
+      <div class="fkey-label">Transport</div>
+      <div class="fkey-key">F5</div>
+    </div>
+    <div class="fkey available" onclick="fkeyAction('available')" title="F6">
+      <div class="fkey-icon">✔</div>
+      <div class="fkey-label">Available</div>
+      <div class="fkey-key">F6</div>
+    </div>
+    <div class="fkey hospital" onclick="fkeyAction('hospital')" title="F7">
+      <div class="fkey-icon">🏨</div>
+      <div class="fkey-label">At Hospital</div>
+      <div class="fkey-key">F7</div>
+    </div>
+    <div class="fkey oos" onclick="fkeyAction('oos')" title="F8">
+      <div class="fkey-icon">🔴</div>
+      <div class="fkey-label">Out of Service</div>
+      <div class="fkey-key">F8</div>
+    </div>
+  </div>
+
+  <!-- MY CALL BANNER (field only, shown when assigned) -->
+  <div class="my-call-banner" id="my-call-banner" style="display:none">
+    <div class="my-call-label">Active Call</div>
+    <div class="my-call-num" id="my-call-num">—</div>
+    <div class="my-call-type" id="my-call-type">—</div>
+    <div class="my-call-addr" id="my-call-addr">—</div>
+  </div>
+
+  <!-- TAB BAR -->
+  <div class="tab-bar" id="tab-bar">
+    <div class="tab active" id="tab-units-btn" onclick="switchTab('units',this)">Unit Status</div>
+    <div class="tab" id="tab-incidents-btn" onclick="switchTab('incidents',this)">
+      Incidents <span class="tab-badge" id="active-inc-count">0</span>
+    </div>
+    <div class="tab" id="tab-log-btn" onclick="switchTab('log',this)">CAD Log</div>
+    <div class="tab" id="tab-command-btn" onclick="switchTab('command',this)">Command</div>
+    <div class="tab" id="tab-myunit-btn" onclick="switchTab('myunit',this)" style="display:none">My Unit</div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- ── UNITS TAB ── -->
+    <div id="view-units" style="display:flex;flex:1;overflow:hidden;flex-direction:column">
+      <!-- toolbar (dispatcher/supervisor only) -->
+      <div class="disp-toolbar" id="units-toolbar" style="display:none">
+        <input class="disp-input" id="unit-search" placeholder="Search units..." oninput="renderUnits()" style="max-width:220px">
+        <select id="unit-filter" onchange="renderUnits()" style="background:#0d1117;border:1px solid #2a3a50;border-radius:3px;padding:6px 8px;color:#8aa4c8;font-family:'Share Tech Mono',monospace;font-size:11px;outline:none">
+          <option value="all">All Units</option>
+          <option value="available">Available</option>
+          <option value="enroute">Enroute</option>
+          <option value="arrived">Arrived</option>
+          <option value="transport">Transport</option>
+          <option value="oos">OOS</option>
+        </select>
+        <button class="d-btn primary" onclick="openModal('modal-dispatch')">+ New Incident</button>
+        <button class="d-btn" onclick="openModal('modal-add-unit')">+ Register Unit</button>
+        <button class="d-btn" onclick="openModal('modal-mutual')">Mutual Aid</button>
+        <span style="margin-left:auto;font-family:'Share Tech Mono',monospace;font-size:11px;color:#444" id="unit-count-lbl"></span>
+      </div>
+      <!-- unit table + bottom events split -->
+      <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+        <div class="unit-table-wrap" id="unit-table-wrap">
+          <table class="unit-table">
+            <thead>
+              <tr>
+                <th onclick="sortUnits('id')">Unit</th>
+                <th onclick="sortUnits('station')">Station</th>
+                <th onclick="sortUnits('status')">Status</th>
+                <th onclick="sortUnits('statusTime')">Time</th>
+                <th onclick="sortUnits('nature')">Nature</th>
+              </tr>
+            </thead>
+            <tbody id="unit-tbody"></tbody>
+          </table>
+        </div>
+        <!-- bottom: held calls / events -->
+        <div class="bottom-panel">
+          <div class="bottom-panel-hdr">
+            <div class="bottom-hdr-title">Unit Status — <span id="unit-total">0</span> / Held Calls — <span id="held-count">0</span></div>
+          </div>
+          <div style="flex:1;overflow-y:auto">
+            <table class="event-table">
+              <thead>
+                <tr>
+                  <th style="width:120px">Event #</th>
+                  <th style="width:130px">Call Time</th>
+                  <th style="width:100px">Station</th>
+                  <th>Nature</th>
+                  <th style="width:100px">Status</th>
+                </tr>
+              </thead>
+              <tbody id="events-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── INCIDENTS TAB ── -->
+    <div id="view-incidents" style="display:none;flex:1;overflow:hidden" class="disp-layout">
+      <div class="disp-main">
+        <div class="disp-toolbar">
+          <input class="disp-input" id="inc-search" placeholder="Search incidents..." oninput="renderIncidents()">
+          <select id="inc-filter" onchange="renderIncidents()" style="background:#0d1117;border:1px solid #2a3a50;border-radius:3px;padding:6px 8px;color:#8aa4c8;font-family:'Share Tech Mono',monospace;font-size:11px;outline:none">
+            <option value="all">All</option><option value="active">Active</option>
+            <option value="pending">Pending</option><option value="closed">Closed</option>
+          </select>
+          <button class="d-btn primary" id="new-inc-btn" onclick="openModal('modal-dispatch')" style="display:none">+ New Incident</button>
+          <button class="d-btn" id="mutual-aid-btn" onclick="openModal('modal-mutual')" style="display:none">Mutual Aid</button>
+        </div>
+        <div class="inc-hdr">
+          <div>Inc #</div><div>Pri</div><div>Type / Address</div><div>Units</div><div>Time</div><div>Status</div>
+        </div>
+        <div class="inc-list-wrap" id="inc-list"></div>
+      </div>
+      <div class="right-sidebar" id="inc-sidebar">
+        <div class="sidebar-hdr"><div class="sidebar-title">Incident Detail</div></div>
+        <div class="sidebar-body" id="inc-sidebar-body">
+          <div style="color:#444;font-family:'Share Tech Mono',monospace;font-size:12px;text-align:center;margin-top:40px">Select an incident</div>
+        </div>
+        <div class="sb-actions" id="inc-sidebar-actions"></div>
+      </div>
+    </div>
+
+    <!-- ── CAD LOG TAB ── -->
+    <div id="view-log" style="display:none;flex:1;overflow:hidden" class="log-wrap">
+      <div class="log-list" id="log-list"></div>
+      <div class="log-input-area">
+        <select class="log-unit-sel" id="log-unit-sel">
+          <option value="">— Select unit for comment —</option>
+        </select>
+        <div class="log-row">
+          <input class="log-input" id="log-input" placeholder="CAD comment / radio log entry..." onkeydown="if(event.key==='Enter')submitLog()">
+          <button class="log-tx" onclick="submitLog()">TX</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── COMMAND TAB ── -->
+    <div id="view-command" style="display:none;flex:1;overflow-y:auto">
+      <div class="sup-grid" id="command-grid"></div>
+    </div>
+
+    <!-- ── MY UNIT TAB (field only) ── -->
+    <div id="view-myunit" style="display:none;flex:1;overflow:hidden;flex-direction:column" class="right-sidebar" style="width:100%">
+      <div class="sidebar-hdr"><div class="sidebar-title" id="myunit-title">My Unit</div></div>
+      <div class="sidebar-body" id="myunit-body"></div>
+      <div class="sb-actions" id="myunit-actions"></div>
+    </div>
+
+  </div><!-- end content -->
+
+  <!-- STATUS BAR -->
+  <div style="height:26px;background:#111;border-top:1px solid #1a1a1a;display:flex;align-items:center;padding:0 12px;gap:20px;flex-shrink:0">
+    <span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#444" id="status-bar-unit">Unit: — </span>
+    <span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#444" id="status-bar-user">User: —</span>
+    <span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#444" id="status-bar-role">Role: —</span>
+    <span style="margin-left:auto;font-family:'Share Tech Mono',monospace;font-size:11px;color:#2a3a50">CentralSquare CAD | Roblox EMS</span>
+  </div>
+
+</div><!-- end app -->
+
+<script>
+// ═══════════════ BROADCAST CHANNEL ═══════════════
+const CAD_CH = new BroadcastChannel('roblox_ems_cad_ehr');
+let ehrOnline = false;
+CAD_CH.onmessage = e => {
+  const m = e.data;
+  if(m.type==='EHR_PING'||m.type==='EHR_PONG'){ehrOnline=true;updateEhrDot(true);CAD_CH.postMessage({type:'CAD_PONG'});}
+  if(m.type==='EHR_PCR_SAVED'){addLog('ehr','EHR','PCR '+m.pcrNum+' submitted for '+m.incNum+' by '+(m.crew||'crew'));}
+};
+setInterval(()=>{CAD_CH.postMessage({type:'CAD_PING'});setTimeout(()=>{if(!ehrOnline)updateEhrDot(false);ehrOnline=false;},2500);},6000);
+function updateEhrDot(on){
+  const d=_('ehr-dot'),l=_('ehr-label');if(!d)return;
+  d.className='conn-dot '+(on?'dot-green':'dot-red');
+  l.textContent=on?'EHR LINKED':'EHR OFFLINE';l.style.color=on?'#2ecc71':'#e74c3c';
+}
+function sendEHR(type,payload){CAD_CH.postMessage({type,...payload,from:'CAD',ts:new Date().toISOString()});}
+
+// ═══════════════ STORAGE ═══════════════
+const KU='cad_units_v2',KI='cad_incidents_v2',KL='cad_log_v2';
+let units=[],incidents=[],cadLog=[],currentUser=null,incCounter=2000;
+let selectedUnitId=null,selectedIncId=null,closingIncId=null,sortCol='id',sortDir=1;
+
+function save(){
+  try{localStorage.setItem(KU,JSON.stringify(units));}catch(e){}
+  try{localStorage.setItem(KI,JSON.stringify(incidents));}catch(e){}
+  try{localStorage.setItem(KL,JSON.stringify(cadLog));}catch(e){}
+}
+function load(){
+  try{units=JSON.parse(localStorage.getItem(KU)||'[]');}catch(e){units=[];}
+  try{incidents=JSON.parse(localStorage.getItem(KI)||'[]');}catch(e){incidents=[];}
+  try{cadLog=JSON.parse(localStorage.getItem(KL)||'[]');}catch(e){cadLog=[];}
+  if(incidents.length)incCounter=Math.max(...incidents.map(i=>parseInt(i.num.replace('INC-',''))||2000));
+  if(!units.length)seedUnits();
+}
+function seedUnits(){
+  units=[
+    {id:"EMS-100",type:"BLS — EMT",crew:"",crew2:"",station:"BASE",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"EMS-101",type:"BLS — EMT",crew:"",crew2:"",station:"BASE",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"EMS-102",type:"BLS — EMT",crew:"",crew2:"",station:"BASE",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"EMS-200",type:"BLS — EMT",crew:"",crew2:"",station:"STATION 2",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"EMS-201",type:"BLS — EMT",crew:"",crew2:"",station:"STATION 2",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"EMS-202",type:"BLS — EMT",crew:"",crew2:"",station:"STATION 2",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"EMS-203",type:"BLS — EMT",crew:"",crew2:"",station:"STATION 2",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"EMS-204",type:"BLS — EMT",crew:"",crew2:"",station:"STATION 2",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"EMS-205",type:"BLS — EMT",crew:"",crew2:"",station:"STATION 2",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"EMS-206",type:"BLS — EMT",crew:"",crew2:"",station:"STATION 2",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"EMS-400",type:"BLS — EMT",crew:"",crew2:"",station:"STATION 4",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"EMS-401",type:"BLS — EMT",crew:"",crew2:"",station:"STATION 4",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"EMS-402",type:"BLS — EMT",crew:"",crew2:"",station:"STATION 4",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"EMS-403",type:"BLS — EMT",crew:"",crew2:"",station:"STATION 4",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"EMS-404",type:"BLS — EMT",crew:"",crew2:"",station:"STATION 4",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"EMS-405",type:"BLS — EMT",crew:"",crew2:"",station:"STATION 4",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"EMS-406",type:"BLS — EMT",crew:"",crew2:"",station:"STATION 4",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"EMS-407",type:"BLS — EMT",crew:"",crew2:"",station:"STATION 4",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"MEDIC 3",type:"ALS — Paramedic",crew:"",crew2:"",station:"STATION 3",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"MEDIC 4",type:"ALS — Paramedic",crew:"",crew2:"",station:"STATION 4",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"MEDIC 5",type:"ALS — Paramedic",crew:"",crew2:"",station:"STATION 5",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"MEDIC 6",type:"ALS — Paramedic",crew:"",crew2:"",station:"STATION 6",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"MEDIC 7",type:"ALS — Paramedic",crew:"",crew2:"",station:"STATION 7",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"MEDIC 8",type:"ALS — Paramedic",crew:"",crew2:"",station:"STATION 8",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"MEDIC 9",type:"ALS — Paramedic",crew:"",crew2:"",station:"STATION 9",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"MEDIC 10",type:"ALS — Paramedic",crew:"",crew2:"",station:"STATION 10",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"MEDIC 11",type:"ALS — Paramedic",crew:"",crew2:"",station:"STATION 11",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"MEDIC 12",type:"ALS — Paramedic",crew:"",crew2:"",station:"STATION 12",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"MEDIC 13",type:"ALS — Paramedic",crew:"",crew2:"",station:"STATION 13",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"MEDIC 14",type:"ALS — Paramedic",crew:"",crew2:"",station:"STATION 14",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"MEDIC 15",type:"ALS — Paramedic",crew:"",crew2:"",station:"STATION 15",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"MEDIC 19",type:"ALS — Paramedic",crew:"",crew2:"",station:"STATION 19",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"MEDIC 20",type:"ALS — Paramedic",crew:"",crew2:"",station:"STATION 20",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"MEDIC 21",type:"ALS — Paramedic",crew:"",crew2:"",station:"STATION 21",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"MEDIC 22",type:"ALS — Paramedic",crew:"",crew2:"",station:"STATION 22",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"MEDIC 23",type:"ALS — Paramedic",crew:"",crew2:"",station:"STATION 23",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"MEDIC 24",type:"ALS — Paramedic",crew:"",crew2:"",station:"STATION 24",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"MEDIC 25",type:"ALS — Paramedic",crew:"",crew2:"",station:"STATION 25",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"MEDIC 26",type:"ALS — Paramedic",crew:"",crew2:"",station:"STATION 26",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"MEDIC 27",type:"ALS — Paramedic",crew:"",crew2:"",station:"STATION 27",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"MEDIC 28",type:"ALS — Paramedic",crew:"",crew2:"",station:"STATION 28",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"MEDIC 29",type:"ALS — Paramedic",crew:"",crew2:"",station:"STATION 29",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"MEDIC 31",type:"ALS — Paramedic",crew:"",crew2:"",station:"STATION 31",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"MEDIC 33",type:"ALS — Paramedic",crew:"",crew2:"",station:"STATION 33",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"AMB-10",type:"ALS — AEMT",crew:"",crew2:"",station:"STATION 10",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"AMB-11",type:"ALS — AEMT",crew:"",crew2:"",station:"STATION 11",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"AMB-14",type:"ALS — AEMT",crew:"",crew2:"",station:"STATION 14",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"AMB-25",type:"ALS — AEMT",crew:"",crew2:"",station:"STATION 25",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"AMB-29",type:"ALS — AEMT",crew:"",crew2:"",station:"STATION 29",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"AMB-40",type:"ALS — AEMT",crew:"",crew2:"",station:"STATION 40",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()},
+    {id:"ALS-1",type:"ALS — Paramedic",crew:"",crew2:"",station:"BASE",agency:"Primary — Roblox EMS",status:"available",incidentId:null,nature:"",statusTime:new Date().toISOString()}
+  ];
+  save();
+},
+    {id:'MED1',type:'ALS — Paramedic',crew:'JONES',crew2:'DAVIS',station:'MED1',agency:'Primary — Roblox EMS'},
+    {id:'MED10',type:'ALS — Paramedic',crew:'WILSON',crew2:'MOORE',station:'BASE',agency:'Primary — Roblox EMS'},
+    {id:'MED11',type:'ALS — Paramedic',crew:'TAYLOR',crew2:'ANDERSON',station:'BASE',agency:'Primary — Roblox EMS'},
+    {id:'MED12',type:'ALS — Paramedic',crew:'THOMAS',crew2:'JACKSON',station:'BASE',agency:'Primary — Roblox EMS'},
+    {id:'MED2',type:'ALS — AEMT',crew:'WHITE',crew2:'HARRIS',station:'MED2',agency:'Primary — Roblox EMS'},
+    {id:'MED20',type:'ALS — Paramedic',crew:'MARTIN',crew2:'GARCIA',station:'WEST',agency:'Primary — Roblox EMS'},
+    {id:'MED21',type:'ALS — Paramedic',crew:'MARTINEZ',crew2:'ROBINSON',station:'WEST',agency:'Primary — Roblox EMS'},
+    {id:'MED22',type:'BLS — EMT',crew:'CLARK',crew2:'RODRIGUEZ',station:'WEST',agency:'Primary — Roblox EMS'},
+    {id:'MED3',type:'ALS — Paramedic',crew:'LEWIS',crew2:'LEE',station:'MED3',agency:'Primary — Roblox EMS'},
+    {id:'MED30',type:'ALS — Paramedic',crew:'JCRAWFORD',crew2:'WALKER',station:'EAST',agency:'Primary — Roblox EMS'},
+    {id:'MED31',type:'ALS — AEMT',crew:'HALL',crew2:'ALLEN',station:'EAST',agency:'Primary — Roblox EMS'},
+  ];
+  units=seed.map(u=>({...u,status:'available',incidentId:null,statusTime:new Date().toISOString(),nature:''}));
+  save();
+}
+
+// ═══════════════ USERS ═══════════════
+const USERS=[
+  {username:'dispatcher01',password:'cad123',role:'dispatcher',name:'Dispatcher 1',unitId:null},
+  {username:'dispatcher02',password:'cad123',role:'dispatcher',name:'Dispatcher 2',unitId:null},
+  {username:'ems100',password:'cad123',role:'field',name:'EMS-100 Crew',unitId:'EMS-100'},
+  {username:'ems101',password:'cad123',role:'field',name:'EMS-101 Crew',unitId:'EMS-101'},
+  {username:'ems102',password:'cad123',role:'field',name:'EMS-102 Crew',unitId:'EMS-102'},
+  {username:'ems200',password:'cad123',role:'field',name:'EMS-200 Crew',unitId:'EMS-200'},
+  {username:'ems201',password:'cad123',role:'field',name:'EMS-201 Crew',unitId:'EMS-201'},
+  {username:'ems202',password:'cad123',role:'field',name:'EMS-202 Crew',unitId:'EMS-202'},
+  {username:'ems203',password:'cad123',role:'field',name:'EMS-203 Crew',unitId:'EMS-203'},
+  {username:'ems204',password:'cad123',role:'field',name:'EMS-204 Crew',unitId:'EMS-204'},
+  {username:'ems205',password:'cad123',role:'field',name:'EMS-205 Crew',unitId:'EMS-205'},
+  {username:'ems206',password:'cad123',role:'field',name:'EMS-206 Crew',unitId:'EMS-206'},
+  {username:'ems400',password:'cad123',role:'field',name:'EMS-400 Crew',unitId:'EMS-400'},
+  {username:'ems401',password:'cad123',role:'field',name:'EMS-401 Crew',unitId:'EMS-401'},
+  {username:'ems402',password:'cad123',role:'field',name:'EMS-402 Crew',unitId:'EMS-402'},
+  {username:'ems403',password:'cad123',role:'field',name:'EMS-403 Crew',unitId:'EMS-403'},
+  {username:'ems404',password:'cad123',role:'field',name:'EMS-404 Crew',unitId:'EMS-404'},
+  {username:'ems405',password:'cad123',role:'field',name:'EMS-405 Crew',unitId:'EMS-405'},
+  {username:'ems406',password:'cad123',role:'field',name:'EMS-406 Crew',unitId:'EMS-406'},
+  {username:'ems407',password:'cad123',role:'field',name:'EMS-407 Crew',unitId:'EMS-407'},
+  {username:'medic3',password:'cad123',role:'field',name:'MEDIC 3 Crew',unitId:'MEDIC 3'},
+  {username:'medic4',password:'cad123',role:'field',name:'MEDIC 4 Crew',unitId:'MEDIC 4'},
+  {username:'medic5',password:'cad123',role:'field',name:'MEDIC 5 Crew',unitId:'MEDIC 5'},
+  {username:'medic6',password:'cad123',role:'field',name:'MEDIC 6 Crew',unitId:'MEDIC 6'},
+  {username:'medic7',password:'cad123',role:'field',name:'MEDIC 7 Crew',unitId:'MEDIC 7'},
+  {username:'medic8',password:'cad123',role:'field',name:'MEDIC 8 Crew',unitId:'MEDIC 8'},
+  {username:'medic9',password:'cad123',role:'field',name:'MEDIC 9 Crew',unitId:'MEDIC 9'},
+  {username:'medic10',password:'cad123',role:'field',name:'MEDIC 10 Crew',unitId:'MEDIC 10'},
+  {username:'medic11',password:'cad123',role:'field',name:'MEDIC 11 Crew',unitId:'MEDIC 11'},
+  {username:'medic12',password:'cad123',role:'field',name:'MEDIC 12 Crew',unitId:'MEDIC 12'},
+  {username:'medic13',password:'cad123',role:'field',name:'MEDIC 13 Crew',unitId:'MEDIC 13'},
+  {username:'medic14',password:'cad123',role:'field',name:'MEDIC 14 Crew',unitId:'MEDIC 14'},
+  {username:'medic15',password:'cad123',role:'field',name:'MEDIC 15 Crew',unitId:'MEDIC 15'},
+  {username:'medic19',password:'cad123',role:'field',name:'MEDIC 19 Crew',unitId:'MEDIC 19'},
+  {username:'medic20',password:'cad123',role:'field',name:'MEDIC 20 Crew',unitId:'MEDIC 20'},
+  {username:'medic21',password:'cad123',role:'field',name:'MEDIC 21 Crew',unitId:'MEDIC 21'},
+  {username:'medic22',password:'cad123',role:'field',name:'MEDIC 22 Crew',unitId:'MEDIC 22'},
+  {username:'medic23',password:'cad123',role:'field',name:'MEDIC 23 Crew',unitId:'MEDIC 23'},
+  {username:'medic24',password:'cad123',role:'field',name:'MEDIC 24 Crew',unitId:'MEDIC 24'},
+  {username:'medic25',password:'cad123',role:'field',name:'MEDIC 25 Crew',unitId:'MEDIC 25'},
+  {username:'medic26',password:'cad123',role:'field',name:'MEDIC 26 Crew',unitId:'MEDIC 26'},
+  {username:'medic27',password:'cad123',role:'field',name:'MEDIC 27 Crew',unitId:'MEDIC 27'},
+  {username:'medic28',password:'cad123',role:'field',name:'MEDIC 28 Crew',unitId:'MEDIC 28'},
+  {username:'medic29',password:'cad123',role:'field',name:'MEDIC 29 Crew',unitId:'MEDIC 29'},
+  {username:'medic31',password:'cad123',role:'field',name:'MEDIC 31 Crew',unitId:'MEDIC 31'},
+  {username:'medic33',password:'cad123',role:'field',name:'MEDIC 33 Crew',unitId:'MEDIC 33'},
+  {username:'amb10',password:'cad123',role:'field',name:'AMB-10 Crew',unitId:'AMB-10'},
+  {username:'amb11',password:'cad123',role:'field',name:'AMB-11 Crew',unitId:'AMB-11'},
+  {username:'amb14',password:'cad123',role:'field',name:'AMB-14 Crew',unitId:'AMB-14'},
+  {username:'amb25',password:'cad123',role:'field',name:'AMB-25 Crew',unitId:'AMB-25'},
+  {username:'amb29',password:'cad123',role:'field',name:'AMB-29 Crew',unitId:'AMB-29'},
+  {username:'amb40',password:'cad123',role:'field',name:'AMB-40 Crew',unitId:'AMB-40'},
+  {username:'als1',password:'cad123',role:'field',name:'ALS-1 Crew',unitId:'ALS-1'},
+  {username:'supervisor',password:'cad123',role:'supervisor',name:'Supervisor',unitId:null},
+];
+
+// ═══════════════ AUTH ═══════════════
+function doLogin(){
+  const u=_('l-user').value.trim().toLowerCase(),p=_('l-pass').value;
+  const user=USERS.find(x=>x.username===u&&x.password===p);
+  const err=_('login-err');err.style.display='none';
+  if(!user){err.style.display='block';return;}
+  currentUser=user;
+  load();
+  _('login-wrap').style.display='none';
+  _('app').classList.add('visible');
+  setupForRole();
+  startClock();
+  renderAll();
+  addLog('status','SYSTEM',user.name+' signed in as '+user.role+(user.unitId?' / Unit: '+user.unitId:''));
+  CAD_CH.postMessage({type:'EHR_PING',user:user.name});
+  setTimeout(()=>CAD_CH.postMessage({type:'CAD_PING'}),500);
+}
+function doLogout(){
+  currentUser=null;
+  _('app').classList.remove('visible');
+  _('login-wrap').style.display='flex';
+  _('l-user').value='';_('l-pass').value='';
+}
+function setupForRole(){
+  const r=currentUser.role;
+  _('sh-title').textContent='CentralSquare CAD';
+  _('sh-info').textContent=r==='field'?'Field Unit View — '+currentUser.unitId:r==='supervisor'?'Supervisor / Command View':'Dispatcher View';
+  _('user-info').textContent=currentUser.name+' | '+r.toUpperCase();
+  _('status-bar-user').textContent='User: '+currentUser.name;
+  _('status-bar-role').textContent='Role: '+r.toUpperCase();
+  _('status-bar-unit').textContent='Unit: '+(currentUser.unitId||'DISPATCH');
+  // Function keys only for field
+  _('fkey-bar').style.display=r==='field'?'flex':'none';
+  // Toolbar for dispatcher/supervisor
+  _('units-toolbar').style.display=(r==='dispatcher'||r==='supervisor')?'flex':'none';
+  // My Unit tab for field
+  _('tab-myunit-btn').style.display=r==='field'?'flex':'none';
+  // New incident / mutual aid in incidents tab
+  if(r!=='field'){_('new-inc-btn').style.display='flex';_('mutual-aid-btn').style.display='flex';}
+  // Command tab hide for basic field
+  if(r==='field')_('tab-command-btn').style.display='none';
+  // Default tab
+  if(r==='field'){switchTab('units',_('tab-units-btn'));renderMyUnit();}
+  else switchTab('units',_('tab-units-btn'));
+}
+
+// ═══════════════ CLOCK ═══════════════
+function startClock(){
+  setInterval(()=>{
+    const n=new Date();
+    _('clock').textContent=[n.getHours(),n.getMinutes(),n.getSeconds()].map(x=>String(x).padStart(2,'0')).join(':');
+    updateTimers();
+  },1000);
+}
+
+// ═══════════════ TABS ═══════════════
+const VIEWS={units:'view-units',incidents:'view-incidents',log:'view-log',command:'view-command',myunit:'view-myunit'};
+function switchTab(name,btn){
+  Object.values(VIEWS).forEach(v=>{const el=_(v);if(el)el.style.display='none';});
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  const v=_(VIEWS[name]);if(v)v.style.display=name==='incidents'?'flex':'flex';
+  if(btn)btn.classList.add('active');
+  if(name==='log')renderLog();
+  if(name==='command')renderCommand();
+  if(name==='myunit')renderMyUnit();
+  if(name==='incidents')renderIncidents();
+}
+
+// ═══════════════ UNIT STATUS ═══════════════
+const STATUS_LABEL={available:'Available',enroute:'Enroute',arrived:'Arrived',transport:'Transport',hospital:'At Hospital',inservice:'In Service',oos:'Out of Service',busy_oos:'Busy Out of Service',assigned:'Assigned'};
+const STATUS_CSS={available:'s-available',enroute:'s-enroute',arrived:'s-arrived',transport:'s-transport',hospital:'s-hospital',inservice:'s-available',oos:'s-oos',busy_oos:'s-busy-oos',assigned:'s-assigned'};
+const NATURE_CSS={enroute:'nature-enroute',arrived:'nature-arrived',oos:'nature-oos',busy_oos:'nature-oos'};
+
+function getUnitIcon(type){
+  if(type.includes('BLS'))return'🚑';
+  if(type.includes('ALS'))return'🚑';
+  if(type.includes('Engine')||type.includes('Fire'))return'🚒';
+  if(type.includes('Supervisor'))return'🚗';
+  return'🚑';
+}
+
+function getUnitIdColor(u){
+  if(u.status==='oos'||u.status==='busy_oos')return'unit-id-orange';
+  if(u.status==='enroute'||u.status==='arrived')return'unit-id-blue';
+  if(u.status==='available'||u.status==='inservice')return'unit-id-green';
+  return'unit-id-orange';
+}
+
+function renderUnits(){
+  const tbody=_('unit-tbody');
+  const q=(_('unit-search')?.value||'').toLowerCase();
+  const f=_('unit-filter')?.value||'all';
+  let list=[...units];
+  if(f!=='all')list=list.filter(u=>u.status===f||u.status.replace(' ','_')===f.replace(' ','_'));
+  if(q)list=list.filter(u=>(u.id+u.station+u.status+u.nature+u.crew).toLowerCase().includes(q));
+  // Sort
+  list.sort((a,b)=>{
+    let av=a[sortCol]||'',bv=b[sortCol]||'';
+    if(sortCol==='statusTime'){av=new Date(av);bv=new Date(bv);}
+    return av<bv?-sortDir:av>bv?sortDir:0;
+  });
+  _('unit-total').textContent=units.length;
+  if(_('unit-count-lbl'))_('unit-count-lbl').textContent=list.length+' units shown';
+  tbody.innerHTML=list.map(u=>{
+    const isMe=currentUser?.role==='field'&&currentUser?.unitId===u.id;
+    const ssel=selectedUnitId===u.id;
+    const sLabel=STATUS_LABEL[u.status]||u.status;
+    const sCss=STATUS_CSS[u.status]||'s-available';
+    const nCss=NATURE_CSS[u.status]||'';
+    const elapsed=getElapsed(u.statusTime);
+    const rowCls=[isMe?'my-unit':'',ssel?'selected':'',u.status==='enroute'||u.status==='arrived'?'row-highlight-blue':'',u.status==='oos'||u.status==='busy_oos'?'row-highlight-orange':''].filter(Boolean).join(' ');
+    return `<tr class="${rowCls}" onclick="selectUnit('${u.id}')" ondblclick="openUnitMenu('${u.id}')">
+      <td><div class="unit-id-cell">${getUnitIcon(u.type)} <span class="${getUnitIdColor(u)}">${u.id}</span>${isMe?'<span style="font-size:10px;color:#2ecc71;margin-left:4px">◀ YOU</span>':''}</div></td>
+      <td class="station-cell">${u.station}</td>
+      <td class="${sCss}">${sLabel}</td>
+      <td class="time-cell">${elapsed}</td>
+      <td class="${nCss}">${u.nature||''}</td>
+    </tr>`;
+  }).join('');
+  // Events / held calls
+  renderEvents();
+  updateLogUnitSel();
+}
+
+function renderEvents(){
+  const tbody=_('events-tbody');
+  const active=incidents.filter(i=>i.status==='active'||i.status==='pending');
+  _('held-count').textContent=incidents.filter(i=>i.status==='pending').length;
+  if(!active.length){tbody.innerHTML='<tr><td colspan="5" style="color:#333;font-family:Share Tech Mono,monospace;font-size:11px;text-align:center;padding:16px">No active events</td></tr>';return;}
+  tbody.innerHTML=active.map(inc=>`<tr onclick="selectInc('${inc.id}');switchTab('incidents',_('tab-incidents-btn'))">
+    <td class="event-num">${inc.num}</td>
+    <td class="event-time">${fmtTime(inc.created)}</td>
+    <td class="event-station">${inc.station||'—'}</td>
+    <td class="event-nature">${inc.type}${inc.agency&&inc.agency!=='primary'?' <span style="color:#a78bfa;font-size:10px">[MUTUAL]</span>':''}</td>
+    <td><span class="status-badge ${inc.status==='active'?'sb-active':'sb-pending'}">${inc.status.toUpperCase()}</span></td>
+  </tr>`).join('');
+}
+
+function sortUnits(col){
+  if(sortCol===col)sortDir*=-1;else{sortCol=col;sortDir=1;}
+  document.querySelectorAll('.unit-table thead th').forEach(th=>{th.classList.remove('sort-asc','sort-desc');});
+  const idx={id:0,station:1,status:2,statusTime:3,nature:4}[col];
+  if(idx!==undefined){const ths=document.querySelectorAll('.unit-table thead th');ths[idx]?.classList.add(sortDir>0?'sort-asc':'sort-desc');}
+  renderUnits();
+}
+
+function selectUnit(id){
+  selectedUnitId=id;
+  renderUnits();
+}
+
+function openUnitMenu(id){
+  // For field units, double-click opens their own unit actions
+  if(currentUser.role==='field'&&currentUser.unitId!==id)return;
+  selectedUnitId=id;
+  renderMyUnit();
+  switchTab('myunit',_('tab-myunit-btn'));
+}
+
+// ═══════════════ FIELD UNIT ACTIONS ═══════════════
+function myUnit(){return units.find(u=>u.id===currentUser?.unitId);}
+
+function fkeyAction(action){
+  if(currentUser.role!=='field')return;
+  const u=myUnit();if(!u)return;
+  if(action==='enroute')setUnitStatus(u.id,'enroute');
+  else if(action==='arrived')setUnitStatus(u.id,'arrived');
+  else if(action==='transport')setUnitStatus(u.id,'transport');
+  else if(action==='hospital')setUnitStatus(u.id,'hospital');
+  else if(action==='clear'||action==='available')setUnitStatus(u.id,'available');
+  else if(action==='oos')setUnitStatus(u.id,'oos');
+  else if(action==='location'){
+    const loc=prompt('Enter new location / cross street:');
+    if(loc)addLog('status',u.id,'Location change: '+loc);
+  }
+}
+
+function setUnitStatus(unitId,newStatus,incidentId){
+  const u=units.find(x=>x.id===unitId);if(!u)return;
+  const old=u.status;
+  u.status=newStatus;u.statusTime=new Date().toISOString();
+  if(incidentId!==undefined)u.incidentId=incidentId;
+  if(newStatus==='available'||newStatus==='inservice'||newStatus==='oos'){u.incidentId=null;u.nature='';}
+  // Update incident timestamps
+  if(u.incidentId){
+    const inc=incidents.find(i=>i.id===u.incidentId);
+    if(inc){
+      if(!inc.unitTimes[unitId])inc.unitTimes[unitId]={};
+      const t=new Date().toISOString();
+      if(newStatus==='enroute')inc.unitTimes[unitId].enroute=t;
+      if(newStatus==='arrived')inc.unitTimes[unitId].arrived=t;
+      if(newStatus==='transport')inc.unitTimes[unitId].transport=t;
+      if(newStatus==='hospital')inc.unitTimes[unitId].hospital=t;
+    }
+  }
+  save();
+  addLog('status',unitId,STATUS_LABEL[old]||old+' → '+(STATUS_LABEL[newStatus]||newStatus));
+  sendEHR('CAD_UNIT_STATUS',{unitId,newStatus,crew:u.crew,crew2:u.crew2,incidentId:u.incidentId,timestamp:new Date().toISOString()});
+  // PCR prompt when clearing
+  if((newStatus==='available'||newStatus==='inservice')&&(old==='hospital'||old==='transport')){
+    const inc=incidents.find(i=>i.units?.includes(unitId));
+    if(inc){
+      setTimeout(()=>{
+        sendEHR('CAD_PCR_PROMPT',{unitId,crew:u.crew,crew2:u.crew2,incidentNum:inc.num,incidentType:inc.type,address:inc.address,priority:inc.priority,timestamp:new Date().toISOString()});
+        showPcrPrompt(unitId,inc);
+      },400);
+    }
+  }
+  renderAll();
+  renderMyUnit();
+  updateMyCallBanner();
+}
+
+function showPcrPrompt(unitId,inc){
+  if(currentUser.role==='field'&&currentUser.unitId!==unitId)return;
+  _('pcr-prompt-body').textContent=unitId+' cleared from '+inc.num+' — '+inc.type+' @ '+inc.address+'. Please complete and submit your PCR in the EHR system.';
+  _('pcr-prompt').style.display='block';
+  setTimeout(()=>dismissPcrPrompt(),30000);
+}
+function dismissPcrPrompt(){_('pcr-prompt').style.display='none';}
+
+function updateMyCallBanner(){
+  if(currentUser?.role!=='field')return;
+  const u=myUnit();const banner=_('my-call-banner');
+  if(!u||!u.incidentId){banner.style.display='none';return;}
+  const inc=incidents.find(i=>i.id===u.incidentId);
+  if(!inc){banner.style.display='none';return;}
+  banner.style.display='flex';
+  _('my-call-num').textContent=inc.num;
+  _('my-call-type').textContent=inc.type;
+  _('my-call-addr').textContent=inc.address;
+}
+
+function renderMyUnit(){
+  if(currentUser?.role!=='field')return;
+  const u=myUnit();
+  const body=_('myunit-body');const acts=_('myunit-actions');
+  _('myunit-title').textContent=u?u.id+' — My Unit':'My Unit';
+  if(!u){body.innerHTML='<div style="color:#444;text-align:center;margin-top:40px;font-family:Share Tech Mono,monospace;font-size:12px">Unit not found.</div>';return;}
+  const inc=u.incidentId?incidents.find(i=>i.id===u.incidentId):null;
+  body.innerHTML=`
+    <div class="sb-field"><div class="sb-label">Unit ID</div><div class="sb-val highlight">${u.id}</div></div>
+    <div class="sb-field"><div class="sb-label">Type</div><div class="sb-val">${u.type}</div></div>
+    <div class="sb-field"><div class="sb-label">Status</div><div class="sb-val ${u.status==='available'?'green':u.status==='oos'?'red':'orange'}">${STATUS_LABEL[u.status]||u.status}</div></div>
+    <div class="sb-field"><div class="sb-label">Time in Status</div><div class="sb-val">${getElapsed(u.statusTime)}</div></div>
+    <div class="sb-field"><div class="sb-label">Crew Lead</div><div class="sb-val">${u.crew||'—'}</div></div>
+    <div class="sb-field"><div class="sb-label">Partner</div><div class="sb-val">${u.crew2||'—'}</div></div>
+    <div class="sb-field"><div class="sb-label">Station</div><div class="sb-val">${u.station}</div></div>
+    ${inc?`<div class="sb-divider"></div>
+    <div class="sb-field"><div class="sb-label">Active Call</div><div class="sb-val highlight">${inc.num}</div></div>
+    <div class="sb-field"><div class="sb-label">Type</div><div class="sb-val green">${inc.type}</div></div>
+    <div class="sb-field"><div class="sb-label">Location</div><div class="sb-val">${inc.address}</div></div>
+    <div class="sb-field"><div class="sb-label">Priority</div><div class="sb-val ${inc.priority<=2?'red':'orange'}">P${inc.priority}</div></div>
+    ${inc.notes?`<div class="sb-field"><div class="sb-label">Notes</div><div class="sb-val" style="font-size:12px;color:#888">${inc.notes}</div></div>`:''}
+    `:'<div class="sb-divider"></div><div class="sb-field"><div class="sb-label">Active Call</div><div class="sb-val" style="color:#444">No active call</div></div>'}`;
+  acts.innerHTML=`
+    <div class="sb-btn-row">
+      <button class="sb-btn blue" onclick="fkeyAction('enroute')">Enroute</button>
+      <button class="sb-btn green" onclick="fkeyAction('arrived')">Arrived</button>
+    </div>
+    <div class="sb-btn-row">
+      <button class="sb-btn purple" onclick="fkeyAction('transport')">Transport</button>
+      <button class="sb-btn purple" onclick="fkeyAction('hospital')">At Hospital</button>
+    </div>
+    <div class="sb-btn-row">
+      <button class="sb-btn green" onclick="fkeyAction('available')">Available</button>
+      <button class="sb-btn orange" onclick="fkeyAction('oos')">Out of Service</button>
+    </div>`;
+}
+
+// ═══════════════ INCIDENTS ═══════════════
+const PRI_AUTO={'Cardiac Arrest':1,'Unconscious / Unresponsive':1,'Stroke / CVA':1,'Difficulty Breathing':2,'Chest Pain':2,'Anaphylaxis / Allergic Reaction':2,'Overdose / Poisoning':2,'MVC — Entrapment':2,'Hemorrhage / Bleeding':2,'Seizure':2,'Diabetic Emergency':2,'Altered Mental Status':2,'MVC — Injuries':3,'Traumatic Injury':3,'OB / Obstetric Emergency':3,'Behavioral / Psychiatric':3,'Back Pain — BLS':3,'Chest Pains':3,'Sick Person — BLS':3,'Fall':3,'Abdominal Pain':3,'Welfare Check':4,'Public Assist':4,'MVC — No Injuries':4,'Structure Fire':1,'Water Rescue':1,'Hazmat':2};
+
+function onTypeChange(){
+  const t=_('ni-type').value;
+  if(t&&PRI_AUTO[t])_('ni-priority').value=String(PRI_AUTO[t]);
+  showRecommendations(t);
+}
+function showRecommendations(type){
+  const box=_('recommend-box'),chips=_('recommend-chips');
+  if(!type){box.style.display='none';return;}
+  const needALS=PRI_AUTO[type]<=2;
+  const avail=units.filter(u=>u.status==='available');
+  const recs=avail.filter(u=>needALS?u.type.includes('ALS')||u.type.includes('Paramedic'):true).slice(0,4);
+  if(!recs.length){box.style.display='none';return;}
+  box.style.display='block';
+  chips.innerHTML=recs.map(u=>`<span class="recommend-chip" onclick="autoSelectUnit('${u.id}')" title="${u.type} — ${u.crew}">⚡ ${u.id} (${u.station})</span>`).join('');
+}
+function autoSelectUnit(id){
+  const sel=_('ni-units');
+  Array.from(sel.options).forEach(o=>{if(o.value===id)o.selected=true;});
+}
+function populateUnitSel(){
+  const sel=_('ni-units');if(!sel)return;
+  sel.innerHTML=units.filter(u=>u.status==='available').map(u=>`<option value="${u.id}">${u.id} — ${u.type} (${u.station}) — ${u.crew}</option>`).join('');
+}
+
+function createIncident(){
+  const type=_('ni-type').value,addr=_('ni-address').value.trim();
+  if(!type||!addr){showToast('Incident type and address are required.','red');return;}
+  incCounter++;
+  const num='INC-'+incCounter;
+  const selUnits=Array.from(_('ni-units').selectedOptions).map(o=>o.value);
+  const pri=parseInt(_('ni-priority').value)||3;
+  const inc={id:'inc'+Date.now(),num,type,address:addr,cross:_('ni-cross').value,station:_('ni-station').value,caller:_('ni-caller').value,notes:_('ni-notes').value,priority:pri,agency:_('ni-agency').value,status:'active',units:selUnits,unitTimes:{},created:new Date().toISOString(),closed:null,disposition:''};
+  selUnits.forEach(uid=>{
+    const u=units.find(x=>x.id===uid);
+    if(u){u.status='assigned';u.nature=type;u.incidentId=inc.id;u.statusTime=new Date().toISOString();inc.unitTimes[uid]={assigned:new Date().toISOString()};}
+  });
+  incidents.unshift(inc);save();
+  addLog('dispatch','DISPATCH',num+' CREATED — P'+pri+' '+type+' @ '+addr+(selUnits.length?' | Assigned: '+selUnits.join(', '):' | NO UNITS'));
+  sendEHR('CAD_INCIDENT_CREATED',{incidentNum:num,incidentType:type,address:addr,priority:pri,units:selUnits.map(uid=>{const u=units.find(x=>x.id===uid);return{id:uid,crew:u?.crew,crew2:u?.crew2};}),caller:inc.caller,notes:inc.notes,timestamp:inc.created});
+  closeModal('modal-dispatch');
+  selectedIncId=inc.id;
+  updateMyCallBanner();
+  renderAll();
+  showToast(num+' created and dispatched.','green');
+}
+
+function renderIncidents(){
+  const q=(_('inc-search')?.value||'').toLowerCase();
+  const f=_('inc-filter')?.value||'all';
+  let list=[...incidents].sort((a,b)=>a.priority-b.priority||(new Date(b.created)-new Date(a.created)));
+  if(f!=='all')list=list.filter(i=>i.status===f);
+  if(q)list=list.filter(i=>(i.num+i.type+i.address+(i.notes||'')).toLowerCase().includes(q));
+  const active=incidents.filter(i=>i.status==='active');
+  _('active-inc-count').textContent=active.length;
+  const el=_('inc-list');
+  if(!list.length){el.innerHTML='<div style="color:#333;font-family:Share Tech Mono,monospace;font-size:12px;text-align:center;padding:40px">No incidents found.</div>';return;}
+  el.innerHTML=list.map(inc=>{
+    const sel=selectedIncId===inc.id;
+    const pCls='p'+inc.priority,ptCls='p'+inc.priority+'-txt';
+    return `<div class="inc-row ${pCls} ${sel?'selected':''}" onclick="selectInc('${inc.id}')">
+      <div class="inc-num">${inc.num}</div>
+      <div class="inc-pri ${ptCls}">P${inc.priority}</div>
+      <div><div class="inc-type">${inc.type}</div><div class="inc-addr">${inc.address}</div></div>
+      <div class="inc-units-cell">${inc.units.join(', ')||'None'}</div>
+      <div class="inc-time-cell">${getElapsed(inc.created)}<br>${fmtTime(inc.created)}</div>
+      <div><span class="status-badge ${inc.status==='active'?'sb-active':inc.status==='pending'?'sb-pending':'sb-closed'}">${inc.status.toUpperCase()}</span></div>
+    </div>`;
+  }).join('');
+}
+
+function selectInc(id){
+  selectedIncId=id;
+  renderIncidents();
+  renderIncSidebar();
+}
+
+function selectInc2(id){selectInc(id);}
+
+function renderIncSidebar(){
+  const inc=incidents.find(i=>i.id===selectedIncId);
+  const body=_('inc-sidebar-body'),acts=_('inc-sidebar-actions');
+  if(!inc){body.innerHTML='<div style="color:#444;font-family:Share Tech Mono,monospace;font-size:12px;text-align:center;margin-top:40px">Select an incident</div>';acts.innerHTML='';return;}
+  const assignedUnits=units.filter(u=>inc.units.includes(u.id));
+  body.innerHTML=`
+    <div class="sb-field"><div class="sb-label">Incident #</div><div class="sb-val highlight">${inc.num}</div></div>
+    <div class="sb-field"><div class="sb-label">Type</div><div class="sb-val">${inc.type}</div></div>
+    <div class="sb-field"><div class="sb-label">Priority</div><div class="sb-val ${inc.priority===1?'red':inc.priority===2?'orange':''}">P${inc.priority}</div></div>
+    <div class="sb-field"><div class="sb-label">Address</div><div class="sb-val">${inc.address}</div></div>
+    ${inc.cross?`<div class="sb-field"><div class="sb-label">Cross Street</div><div class="sb-val">${inc.cross}</div></div>`:''}
+    <div class="sb-field"><div class="sb-label">Station</div><div class="sb-val">${inc.station||'—'}</div></div>
+    <div class="sb-field"><div class="sb-label">Caller</div><div class="sb-val">${inc.caller||'—'}</div></div>
+    <div class="sb-field"><div class="sb-label">Created</div><div class="sb-val">${fmtTime(inc.created)} (${getElapsed(inc.created)} ago)</div></div>
+    <div class="sb-field"><div class="sb-label">Agency</div><div class="sb-val">${inc.agency||'Primary'}</div></div>
+    <div class="sb-divider"></div>
+    <div class="sb-field"><div class="sb-label">Assigned Units (${inc.units.length})</div>
+      ${assignedUnits.length?assignedUnits.map(u=>`<div style="display:flex;align-items:center;gap:6px;margin-top:4px"><span class="${STATUS_CSS[u.status]}" style="font-family:Barlow Condensed,sans-serif;font-size:13px;font-weight:700">${u.id}</span><span style="font-size:11px;color:#444">— ${STATUS_LABEL[u.status]||u.status}</span></div>`).join(''):'<div style="color:#333;font-size:12px;margin-top:4px">None assigned</div>'}
+    </div>
+    ${inc.notes?`<div class="sb-divider"></div><div class="sb-field"><div class="sb-label">Notes</div><div class="sb-val" style="font-size:12px;white-space:pre-wrap;color:#888">${inc.notes}</div></div>`:''}`;
+  const canEdit=currentUser.role!=='field';
+  acts.innerHTML=canEdit&&inc.status!=='closed'?`
+    <div class="sb-btn-row">
+      <button class="sb-btn blue" onclick="quickAssignUnit('${inc.id}')">Assign Unit</button>
+      <button class="sb-btn gray" onclick="addIncNote('${inc.id}')">Add Note</button>
+    </div>
+    <button class="sb-btn red" style="width:100%" onclick="openCloseInc('${inc.id}')">Close Incident</button>`
+  :inc.status==='closed'?`<div style="color:#444;font-family:Share Tech Mono,monospace;font-size:11px;text-align:center;padding:8px">Incident closed — ${inc.disposition||'—'}</div>`:'';
+}
+
+function quickAssignUnit(incId){
+  const inc=incidents.find(i=>i.id===incId);if(!inc)return;
+  const avail=units.filter(u=>u.status==='available');
+  if(!avail.length){showToast('No available units.','red');return;}
+  const uid=prompt('Enter unit ID to assign:\nAvailable: '+avail.map(u=>u.id).join(', '));
+  if(!uid)return;
+  const u=units.find(x=>x.id.toLowerCase()===uid.trim().toLowerCase());
+  if(!u){showToast('Unit not found.','red');return;}
+  if(!inc.units.includes(u.id))inc.units.push(u.id);
+  if(!inc.unitTimes[u.id])inc.unitTimes[u.id]={assigned:new Date().toISOString()};
+  u.status='assigned';u.nature=inc.type;u.incidentId=incId;u.statusTime=new Date().toISOString();
+  save();
+  addLog('dispatch',u.id,'Assigned to '+inc.num+' — '+inc.type);
+  sendEHR('CAD_UNIT_ASSIGNED',{unitId:u.id,crew:u.crew,crew2:u.crew2,incidentNum:inc.num,incidentType:inc.type,address:inc.address,priority:inc.priority});
+  renderAll();renderIncSidebar();
+}
+
+function addIncNote(incId){
+  const note=prompt('Add note to incident:');if(!note)return;
+  const inc=incidents.find(i=>i.id===incId);if(!inc)return;
+  inc.notes=(inc.notes?inc.notes+'\n':'')+fmtTime(new Date())+' '+currentUser.name+': '+note;
+  save();addLog('comment',currentUser.name,'Note on '+inc.num+': '+note);renderIncSidebar();
+}
+
+function openCloseInc(incId){
+  closingIncId=incId;
+  const inc=incidents.find(i=>i.id===incId);if(!inc)return;
+  _('close-inc-preview').textContent=inc.num+' — P'+inc.priority+' '+inc.type+' @ '+inc.address;
+  _('close-notes').value='';
+  openModal('modal-close-inc');
+}
+
+function confirmClose(){
+  const inc=incidents.find(i=>i.id===closingIncId);if(!inc)return;
+  inc.status='closed';inc.closed=new Date().toISOString();
+  inc.disposition=_('close-disp').value;
+  const note=_('close-notes').value;if(note)inc.notes=(inc.notes?inc.notes+'\n':'')+note;
+  inc.units.forEach(uid=>{
+    const u=units.find(x=>x.id===uid);
+    if(u&&u.status!=='oos'){u.status='inservice';u.nature='';u.incidentId=null;u.statusTime=new Date().toISOString();}
+  });
+  save();
+  addLog('dispatch','DISPATCH',inc.num+' CLOSED — '+inc.disposition);
+  sendEHR('CAD_INCIDENT_CLOSED',{incidentNum:inc.num,incidentType:inc.type,address:inc.address,disposition:inc.disposition,units:inc.units,closeTime:inc.closed,timestamp:inc.closed});
+  closeModal('modal-close-inc');
+  selectedIncId=null;
+  renderAll();showToast(inc.num+' closed.','green');
+}
+
+// ═══════════════ ADD UNIT ═══════════════
+function addUnit(){
+  const id=_('au-id').value.trim().toUpperCase();
+  if(!id){showToast('Unit ID required.','red');return;}
+  if(units.find(u=>u.id===id)){showToast('Unit ID already exists.','red');return;}
+  units.push({id,type:_('au-type').value,crew:_('au-crew').value,crew2:_('au-crew2').value,station:_('au-station').value,agency:_('au-agency').value,status:'available',incidentId:null,nature:'',statusTime:new Date().toISOString()});
+  save();addLog('status','SYSTEM','Unit '+id+' registered');closeModal('modal-add-unit');renderAll();showToast(id+' registered.','green');
+}
+
+function removeUnit(id){if(!confirm('Remove unit '+id+'?'))return;units=units.filter(u=>u.id!==id);save();addLog('status','SYSTEM','Unit '+id+' removed');renderAll();}
+
+// ═══════════════ MUTUAL AID ═══════════════
+function openMutualModal(){
+  const sel=_('ma-incident');
+  sel.innerHTML='<option value="">— None —</option>'+incidents.filter(i=>i.status==='active').map(i=>`<option value="${i.id}">${i.num} — ${i.type}</option>`).join('');
+  openModal('modal-mutual');
+}
+function submitMutualAid(){
+  const agency=_('ma-agency').value,res=_('ma-resource').value,notes=_('ma-notes').value;
+  const incId=_('ma-incident').value;const inc=incId?incidents.find(i=>i.id===incId):null;
+  addLog('dispatch','MUTUAL AID','Request to '+agency+': '+res+(inc?' for '+inc.num:'')+' — '+(notes||'No notes'));
+  sendEHR('CAD_MUTUAL_AID',{agency,resource:res,incidentNum:inc?.num,notes});
+  closeModal('modal-mutual');showToast('Mutual aid request sent to '+agency,'blue');
+}
+
+// ═══════════════ LOG ═══════════════
+function addLog(type,unit,msg){
+  cadLog.unshift({type,unit,msg,time:new Date().toISOString()});
+  if(cadLog.length>300)cadLog=cadLog.slice(0,300);
+  save();renderLog();
+}
+function renderLog(){
+  const el=_('log-list');if(!el)return;
+  el.innerHTML=cadLog.slice(0,80).map(e=>`<div class="log-entry ${e.type}">
+    <span class="log-t">${fmtTime(e.time)}</span> <span class="log-u">[${e.unit}]</span>
+    <span class="log-m ${e.type==='ehr'?'ehr-m':e.type==='alert'?'alert-m':''}">${e.msg}</span>
+  </div>`).join('');
+}
+function submitLog(){
+  const inp=_('log-input'),unit=_('log-unit-sel').value||(currentUser?.unitId||currentUser?.name||'DISPATCH');
+  const msg=inp.value.trim();if(!msg)return;
+  addLog('comment',unit,msg);inp.value='';
+}
+function updateLogUnitSel(){
+  const sel=_('log-unit-sel');if(!sel)return;
+  const cur=sel.value;
+  sel.innerHTML='<option value="">— Select unit —</option>'+units.map(u=>`<option value="${u.id}">${u.id}</option>`).join('');
+  sel.value=cur;
+  if(currentUser?.unitId)sel.value=currentUser.unitId;
+}
+
+// ═══════════════ COMMAND ═══════════════
+function renderCommand(){
+  const el=_('command-grid');if(!el)return;
+  const byS={};units.forEach(u=>{byS[u.status]=(byS[u.status]||0)+1;});
+  const active=incidents.filter(i=>i.status==='active');
+  const colors={available:'#2ecc71',enroute:'#4da6ff',arrived:'#4da6ff',transport:'#a78bfa',hospital:'#a78bfa',inservice:'#2ecc71',oos:'#e8941f',busy_oos:'#e8941f',assigned:'#e8941f'};
+  el.innerHTML=`
+    <div class="sup-card">
+      <div class="sup-card-title">Unit Summary</div>
+      ${Object.entries(STATUS_LABEL).map(([k,v])=>`<div class="stat-row"><span>${v}</span><span class="stat-v" style="color:${colors[k]||'#fff'}">${byS[k]||0}</span></div>`).join('')}
+      <div class="stat-row" style="border-top:1px solid #2a2a2a;margin-top:4px;padding-top:4px"><span>Total Units</span><span class="stat-v">${units.length}</span></div>
+    </div>
+    <div class="sup-card">
+      <div class="sup-card-title">Incident Summary</div>
+      <div class="stat-row"><span>Active</span><span class="stat-v" style="color:#2ecc71">${incidents.filter(i=>i.status==='active').length}</span></div>
+      <div class="stat-row"><span>Pending</span><span class="stat-v" style="color:#e8941f">${incidents.filter(i=>i.status==='pending').length}</span></div>
+      <div class="stat-row"><span>Closed</span><span class="stat-v">${incidents.filter(i=>i.status==='closed').length}</span></div>
+      <div class="stat-row"><span>P1 Critical</span><span class="stat-v" style="color:#e74c3c">${active.filter(i=>i.priority===1).length}</span></div>
+      <div class="stat-row"><span>P2 Urgent</span><span class="stat-v" style="color:#e8941f">${active.filter(i=>i.priority===2).length}</span></div>
+      <div class="stat-row"><span>Mutual Aid</span><span class="stat-v" style="color:#a78bfa">${active.filter(i=>i.agency&&i.agency!=='primary').length}</span></div>
+    </div>
+    <div class="sup-card">
+      <div class="sup-card-title">EHR Status</div>
+      <div class="stat-row"><span>Connection</span><span class="stat-v" style="color:${ehrOnline?'#2ecc71':'#e74c3c'}">${ehrOnline?'ONLINE':'OFFLINE'}</span></div>
+      <div class="stat-row"><span>PCR Prompts</span><span class="stat-v">${cadLog.filter(l=>l.type==='ehr').length}</span></div>
+      <div class="stat-row"><span>Channel</span><span class="stat-v" style="font-size:10px;color:#444">roblox_ems_cad_ehr</span></div>
+    </div>
+    <div class="sup-card" style="grid-column:1/-1">
+      <div class="sup-card-title">Active Incidents — All Units</div>
+      ${active.length?`<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px;font-family:Barlow Condensed,sans-serif">
+        <thead><tr style="color:#444;font-size:11px;text-transform:uppercase;letter-spacing:0.5px">
+          <th style="padding:5px 8px;text-align:left">Pri</th><th style="padding:5px 8px;text-align:left">Inc #</th><th style="padding:5px 8px;text-align:left">Type</th><th style="padding:5px 8px;text-align:left">Address</th><th style="padding:5px 8px;text-align:left">Time</th><th style="padding:5px 8px;text-align:left">Units</th>
+        </tr></thead><tbody>
+          ${active.map(i=>`<tr style="border-bottom:1px solid #1a1a1a;cursor:pointer" onclick="selectInc('${i.id}');switchTab('incidents',_('tab-incidents-btn'))">
+            <td style="padding:5px 8px;color:${i.priority===1?'#e74c3c':i.priority===2?'#e8941f':'#4da6ff'};font-weight:800">P${i.priority}</td>
+            <td style="padding:5px 8px;color:#4da6ff;font-family:Share Tech Mono,monospace;font-size:11px">${i.num}</td>
+            <td style="padding:5px 8px;color:#fff;font-weight:700">${i.type}</td>
+            <td style="padding:5px 8px;color:#888;font-family:Share Tech Mono,monospace;font-size:11px">${i.address.slice(0,25)}</td>
+            <td style="padding:5px 8px;color:#444;font-family:Share Tech Mono,monospace;font-size:11px">${getElapsed(i.created)}</td>
+            <td style="padding:5px 8px;color:#e8941f">${i.units.join(', ')||'None'}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table></div>`:'<div style="color:#333;font-family:Share Tech Mono,monospace;font-size:12px;text-align:center;padding:20px">No active incidents</div>'}
+    </div>`;
+}
+
+// ═══════════════ HELPERS ═══════════════
+function _(id){return document.getElementById(id);}
+function getElapsed(iso){
+  if(!iso)return'—';const d=Math.floor((Date.now()-new Date(iso).getTime())/1000);
+  if(d<60)return d+'s';if(d<3600)return String(Math.floor(d/60)).padStart(2,'0')+':'+String(d%60).padStart(2,'0');
+  return Math.floor(d/3600)+'h '+String(Math.floor((d%3600)/60)).padStart(2,'0')+'m';
+}
+function fmtTime(iso){
+  if(!iso)return'—';const d=new Date(iso);
+  return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+':'+String(d.getSeconds()).padStart(2,'0');
+}
+function updateTimers(){renderUnits();}
+function showToast(msg,type){
+  const t=_('toast');t.textContent=msg;t.className='toast '+(type||'');t.style.display='block';setTimeout(()=>{t.style.display='none';},3500);
+}
+function openModal(id){
+  if(id==='modal-dispatch'){populateUnitSel();_('ni-type').value='';_('ni-address').value='';_('ni-notes').value='';_('ni-caller').value='';_('ni-cross').value='';_('recommend-box').style.display='none';}
+  if(id==='modal-mutual')openMutualModal();
+  _(id).style.display='flex';
+}
+function closeModal(id){_(id).style.display='none';}
+function renderAll(){
+  renderUnits();
+  if(_('inc-list').children.length>0||selectedIncId)renderIncidents();
+  if(_('view-log').style.display!=='none')renderLog();
+  updateMyCallBanner();
+  updateLogUnitSel();
+}
+document.addEventListener('keydown',e=>{
+  if(!currentUser)return;
+  if(e.key==='Escape')document.querySelectorAll('.modal-overlay').forEach(m=>m.style.display='none');
+  if(currentUser.role==='field'){
+    if(e.key==='F1'){e.preventDefault();fkeyAction('enroute');}
+    if(e.key==='F2'){e.preventDefault();fkeyAction('arrived');}
+    if(e.key==='F3'){e.preventDefault();fkeyAction('location');}
+    if(e.key==='F4'){e.preventDefault();fkeyAction('clear');}
+    if(e.key==='F5'){e.preventDefault();fkeyAction('transport');}
+    if(e.key==='F6'){e.preventDefault();fkeyAction('available');}
+    if(e.key==='F7'){e.preventDefault();fkeyAction('hospital');}
+    if(e.key==='F8'){e.preventDefault();fkeyAction('oos');}
+  }
+});
+setTimeout(()=>CAD_CH.postMessage({type:'CAD_PING'}),1000);
+</script>
+</body>
+</html>
